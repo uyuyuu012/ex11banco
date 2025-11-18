@@ -1,277 +1,234 @@
-create database dbdistribuidora;
-use dbdistribuidora;
+create database dbDistribuidora;
+use dbDistribuidora;
 
-create table tbnota_fiscal(
-	nf int primary key,
-    totalnota decimal(8,2) not null,
-    dataemissao date not null
+create table tbFornecedor(
+	Codigo int primary key auto_increment,
+    Nome varchar(200) not null,
+    CNPJ decimal(14,0) unique,
+    Telefone decimal(11,0)
 );
 
-create table tbfornecedor(
-	codigo int primary key auto_increment,
-    nome varchar(200) not null,
-    cnpj decimal(14,0) unique,
-    telefone decimal(11,0)
+create table tbProduto(
+	CodigoBarras decimal(14,0) primary key,
+    Nome varchar(200) not null,
+    Valor decimal(7,2) not null,
+    Qtd int null
 );
 
-create table tbproduto(
-	codigobarras decimal(14,0) primary key,
-    nome varchar(200) not null,
-    valorunitario decimal(7,2) not null,
-    qtd int null
+create table tbEstado(
+	UFId int auto_increment primary key,
+    UF char(2) not null
 );
 
-create table tbestado(
-	ufid int auto_increment primary key,
-    uf char(2) not null
+create table tbCidade(
+	CidadeId int auto_increment primary key,
+    Cidade varchar(200) not null
 );
 
-create table tbcidade(
-	cidadeid int auto_increment primary key,
-    cidade varchar(200) not null
+create table tbBairro(
+	BairroId int auto_increment primary key,
+    Bairro varchar(200) not null
 );
 
-create table tbbairro(
-	bairroid int auto_increment primary key,
-    bairro varchar(200) not null
+create table tbCompra(
+	NotaFiscal int primary key,
+    DataCompra date not null,
+    ValorTotal decimal(7,2) not null,
+    QtdTotal int not null,
+    Codigo int,
+    foreign key (Codigo) references tbFornecedor(Codigo)
 );
 
-create table tbcompra(
-	notafiscal int primary key,
-    datacompra date not null,
-    valortotal decimal(7,2) not null,
-    qtdtotal int not null,
-    codigo int,
-    foreign key (codigo) references tbfornecedor(codigo)
+create table tbItem_compra(
+	NotaFiscal int not null,
+    CodigoBarras decimal(14,0) not null,
+    Qtd int not null,
+    ValorItem decimal(7,2) not null,
+    primary key(CodigoBarras, NotaFiscal),
+    foreign key (CodigoBarras) references tbProduto(CodigoBarras),
+    foreign key (NotaFiscal) references tbCompra(NotaFiscal)
 );
 
-create table tbitem_compra(
-	notafiscal int,
-    codigobarras decimal(14,0),
-    qtd int not null,
-    valoritem decimal(7,2) not null,
-    primary key(codigobarras, notafiscal),
-    foreign key (codigobarras) references tbproduto(codigobarras),
-    foreign key (notafiscal) references tbcompra(notafiscal)
+create table tbEndereco(
+	Logradouro varchar(200) not null,
+    BairroId int not null,
+    CidadeId int not null,
+    UFId int not null,
+	CEP decimal(8,0) primary key,
+    foreign key (BairroId) references tbBairro(BairroId),
+    foreign key (UFId) references tbEstado(UFId),
+    foreign key (CidadeId) references tbCidade(CidadeId)
 );
 
-create table tbendereco(
-	logradouro varchar(200) not null,
-    bairroid int not null,
-    cidadeid int not null,
-    ufid int not null,
-	cep decimal(8,0) primary key,
-    foreign key (bairroid) references tbbairro(bairroid),
-    foreign key (ufid) references tbestado(ufid),
-    foreign key (cidadeid) references tbcidade(cidadeid)
+create table tbCliente(
+	Id int auto_increment primary key,
+    NomeCli varchar(200) not null,
+    NumEnd int not null,
+    CompEnd varchar(50),
+    CepCli decimal(8,0),
+    foreign key (CepCli) references tbEndereco(CEP)
 );
 
-create table tbcliente(
-	id int auto_increment primary key,
-    nomecli varchar(200) not null,
-    numend smallint not null,
-    compend varchar(50),
-    cepcli decimal(8,0),
-    foreign key (cepcli) references tbendereco(cep)
+create table tbVenda(
+	NumeroVenda int primary key,
+    DataVenda date not null,
+    TotalVenda decimal(7,2) not null,
+    NF int,
+    Id_Cli int not null,
+    foreign key (NF) references tbNota_Fiscal(NF),
+    foreign key (Id_Cli) references tbCliente(Id)
 );
 
-create table tbvenda(
-	numerovenda int primary key,
-    datavenda date not null,
-    totalvenda decimal(7,2) not null,
-    nf int,
-    id_cli int not null,
-    foreign key (nf) references tbnota_fiscal(nf),
-    foreign key (id_cli) references tbcliente(id)
-);
-
-create table tbitem_venda(
+create table tbItem_venda(
 	qtd int not null,
     valoritem decimal(7,2) not null,
     codigobarras decimal(14),
     numerovenda int,
     primary key(codigobarras, numerovenda),
-    foreign key (codigobarras) references tbproduto(codigobarras),
-    foreign key (numerovenda) references tbvenda(numerovenda)
+    foreign key (codigobarras) references tbProduto(CodigoBarras),
+    foreign key (numerovenda) references tbVenda(NumeroVenda)
 );
 
-create table tbcliente_pf(
-	id int,
-	cpf decimal(11,0) primary key,
-    rg decimal(9,0) not null,
-    rg_dig char(1) not null,
-    nasc date not null,
-    foreign key (id) references tbcliente(id)
+create table tbCliente_PF(
+	Id int not null,
+	CPF decimal(11,0) primary key,
+    RG decimal(9,0) not null,
+    RG_DIG char(1) not null,
+    Nasc datetime not null,
+    foreign key (Id) references tbCliente(Id)
 );
 
-create table tbcliente_pj(
-    id int,
-	cnpj decimal(14,0) primary key,
-    ie decimal(11,0) unique,
-    foreign key (id) references tbcliente(id)
+create table tbCliente_PJ(
+    Id int not null,
+	CNPJ decimal(14,0) primary key,
+    IE decimal(11,0) unique,
+    foreign key (Id) references tbCliente(Id)
 );
 
--- atividade 1
+create table tbNota_fiscal(
+	NF int primary key,
+    totalnota decimal(8,2) not null,
+    dataemissao date not null
+);
 
-insert into tbfornecedor 
+insert into tbFornecedor(CNPJ, Nome, Telefone )
 	values
-    (null, 'Revenda Chico Loco', 1245678937123, 11934567897),
-    (null, 'José Faz Tudo S/A', 1345678937123, 11934567898),
-    (null, 'Vadalto Entregas', 1445678937123, 11934567899),
-    (null, 'Astrogildo das Estrela', 1545678937123, 11934567800),
-    (null, 'Amoroso e Doce', 1645678937123, 11934567801),
-    (null, 'Marcelo Dedal', 1745678937123, 11934567802),
-    (null, 'Franciscano Cachaça', 1845678937123, 11934567803),
-    (null, 'Joãozinho Chupeta', 1945678937123, 11934567804);    
+    ('Revenda Chico Loco', 1245678937123, 11934567897),
+    ('José Faz Tudo S/A', 1345678937123, 11934567898),
+    ('Vadalto Entregas', 1445678937123, 11934567899),
+    ('Astrogildo das Estrela', 1545678937123, 11934567800),
+    ('Amoroso e Doce', 1645678937123, 11934567801),
+    ('Marcelo Dedal', 1745678937123, 11934567802),
+    ('Franciscano Cachaça', 1845678937123, 11934567803),
+    ('Joãozinho Chupeta', 1945678937123, 11934567804);    
 
 -- atividade 2
 
-delimiter //
-create procedure insert_cidade1 ()
+delimiter $$
+create procedure insert_cidade1(in InCidade varchar(200))
 begin
 	-- Inserindo valores na tbcidade
-	insert into tbcidade
+	insert into tbCidade(Cidade)
 		values
-		(null, 'Rio de Janeiro'),
-		(null, 'São Carlos'),
-		(null, 'Campinas'),
-		(null, 'Franco da Rocha'),
-		(null, 'Osasco'),
-		(null, 'Pirituba'),
-		(null, 'Lapa'),
-		(null, 'Ponta Grossa');
+        (InCidade);
         
 end;
-// delimiter ;
-call insert_cidade1;
+$$ delimiter ;
+
+call insert_cidade1('Rio de Janeiro');
+call insert_cidade1('São Carlos');
+call insert_cidade1('Campinas');
+call insert_cidade1('Franco da Rocha');
+call insert_cidade1('Osasco');
+call insert_cidade1('Pirituba');
+call insert_cidade1('Lapa');
+call insert_cidade1('Ponta Grossa');
 -- atividade 3 
 
-delimiter //
-create procedure insert_estado1 ()
+delimiter $$
+create procedure insert_estado1(in InUF varchar(2))
 begin
 	-- Inserindo valores na tbestado
-	insert into tbestado
+	insert into tbEstado(UF)
 		values
-		(null, 'SP'),
-		(null, 'RJ'),
-		(null, 'RS');
-        
+        (InUF);
+
 end;
-// delimiter ;
-call insert_estado1;
+$$ delimiter ;
+call insert_estado1('SP');
+call insert_estado1('RJ');
+call insert_estado1('RS');
+
 
 -- atividade 4
 
-delimiter //
-create procedure insert_bairro1 ()
+delimiter $$
+create procedure insert_bairro1 (in InBairro varchar(200))
 begin
 	-- Inserindo valores na tbbairro
-	insert into tbbairro
+	insert into tbBairro(Bairro)
 		values
-		(null, 'Aclimação'),
-		(null, 'Capão Redondo'),
-		(null, 'Pirituba'),
-		(null, 'Liberdade');
-
+        (InBairro);
 end;
-// delimiter ;
-call insert_bairro1;
+
+$$ delimiter ;
+call insert_bairro1('Aclimação');
+call insert_bairro1('Capão Redondo');
+call insert_bairro1('Pirituba');
+call insert_bairro1('Liberdade');
     
 -- atividade 5
 
-delimiter //
-create procedure insert_produto ()
+delimiter $$
+create procedure insert_produto (in InCodigo int, in InNome varchar(200), in InValor decimal(7,2), in InQuantidade int)
 begin
 	-- Inserindo valores na tbproduto
-	insert into tbproduto
+	insert into tbProduto
 		values
-		(12345678910111, 'Rei do Papel Mache', 54.61, 120),
-		(12345678910112, 'Bolinha de Sabão', 100.45, 120),
-		(12345678910113, 'Carro Bate', 44.00, 120),
-		(12345678910114, 'Bola Furada', 10.00, 120),
-		(12345678910115, 'Maçã Laranja', 99.44, 120),
-		(12345678910116, 'Boneco do Hitler', 124.00, 200),
-		(12345678910117, 'Farinha de Suruí', 50.00, 200),
-		(12345678910118, 'Zelador do Cemitério', 24.50, 120);
+		(InCodigo, InNome,InValor,InQuantidade);
 
 end;
-// delimiter ;
-call insert_produto;
+$$ delimiter ;
+call insert_produto (12345678910111, 'Rei do Papel Mache', 54.61, 120);
+call insert_produto (12345678910112, 'Bolinha de Sabão', 100.45, 120);
+call insert_produto (12345678910113, 'Carro Bate', 44.00, 120);
+call insert_produto (12345678910114, 'Bola Furada', 10.00, 120);
+call insert_produto (12345678910115, 'Maçã Laranja', 99.44, 120);
+call insert_produto (12345678910116, 'Boneco do Hitler', 124.00, 200);
+call insert_produto (12345678910117, 'Farinha de Suruí', 50.00, 200);
+call insert_produto (12345678910118, 'Zelador do Cemitério', 24.50, 120);
 
 -- atividade 6
 
-delimiter //
-create procedure insert_bairro2 ()
-begin
-	insert into tbbairro
-		values
-        (null, 'Lapa'),
-        (null, 'Consolação'),
-        (null, 'Aclimação'),
-        (null, 'Penha'),
-        (null, 'Jardim Santa Isabel'),
-        (null, 'Sei Lá');
-        
-end;
-// delimiter ;
-call insert_bairro2;
-        
-delimiter //
-create procedure insert_cidade2 ()
-begin
-		insert into tbcidade
-		values
-        (null, 'São Paulo'),
-        (null, 'Barra Mansa'),
-        (null, 'Cuiabá'),
-        (null, 'Recife');
-        
-end;
-// delimiter ;
-call insert_cidade2;
 
-delimiter //
-create procedure insert_estado2 ()
-begin
-		insert into tbestado
-		values
-        (null, 'MT'),
-        (null, 'PE');
-        
-end;
-// delimiter ;
-call insert_estado2;
-
-delimiter //
-create procedure insert_endereco ()
+delimiter $$
+create procedure insert_endereco (in InLogradouro varchar(200), in InBairro varchar(200), in InUf varchar(2), in InCep int)
 begin
 	-- Inserindo valores na tbendereco
 
-	insert into tbendereco
+	insert into tbEndereco(Logradouro, Bairro, Cidade, UF, CEP)
 		values 
-		('Rua da Federal',5 , 9, 1, 12345050),
-		('Av Brasil',5, 3, 1, 12345051),
-		('Rua Liberdade',6, 9, 1, 12345052),
-		('Av Paulista',8, 1, 2, 12345053),
-		('Rua Ximbú',8, 1, 2, 12345054),
-		('Rua Piu XI',8, 3, 1, 12345055),
-		('Rua Chocolate',7, 10, 2, 12345056),
-		('Rua Pão na Chapa',5, 9, 3, 12345057),
-        ('Av Nova',9, 11, 4, 12345058),
-		('Rua Veia',9, 11, 4, 12345059),
-        ('Rua do Amores',10, 12, 5, 12345060);
+		(InLogradouro, inBairro, InUf, InCep);
 
 end;
-// delimiter ;
-call insert_endereco;
+$$ delimiter ;
+call insert_endereco('Rua da Federal','Lapa' , 'São Paulo', 'SP', 12345050);
+call insert_endereco('Av Brasil','Lapa', 'Campinas', 'SP', 12345051);
+call insert_endereco('Rua Liberdade','Consolação', 'São Paulo', 'SP', 12345052);
+call insert_endereco('Av Paulista','Penha', 'Rio de Janeiro', 'RJ', 12345053);
+call insert_endereco('Rua Ximbú','Penha', 'Rio de Janeiro', 'RJ', 12345054);
+call insert_endereco('Rua Piu XI','Penha', 'Campinas', 'SP', 12345055);
+call insert_endereco('Rua Chocolate','Aclimação', 'Barra Mansa', 'RJ', 12345056);
+call insert_endereco('Rua Pão na Chapa','Barra Funda', 'Ponta Grossa', 'RS', 12345057);
     
 -- atividade 7
+ 
 
-delimiter //
-create procedure insert_cliente ()
+delimiter $$
+create procedure insert_cliente (in InNomeCli varchar(200), in InNumEnd int, in InCompEnd varchar(200))
 begin
 	-- Inserindo valores na tbcliente
-	insert into tbcliente (nomecli, numend, compend, cepcli)
+	insert into tbCliente (NomeCli, NumEnd, CompEnd, CepCli)
 		values 
         ('Pimpão', 325, null, 12345051),
         ( 'Disney Chaplin', 89, 'Ap.12', 12345053),
@@ -284,15 +241,7 @@ begin
         ('Cemreais', 5024, 'Sala 23', 12345060),
         ('Durango', 1254, null, 12345060);
 
-end;
-// delimiter ;
-call insert_cliente;
-
-delimiter //
-create procedure insert_clientepf ()
-begin
-	-- Inserindo valores na tbcliente_pf
-	insert into tbcliente_pf
+	insert into tbCliente_PF()
 		values	 
         (1, 12345678911, 12345678, 0,'2000-10-12'),
         (2, 12345678912, 12345679, 0, '2001-11-21'),
@@ -301,43 +250,50 @@ begin
         (5, 12345678915, 12345682, 0, '2002-07-15');
         
 end;
-// delimiter ;
-call insert_clientepf;
+$$ delimiter ;
+call insert_cliente();
 
 -- atividade 8
 
-delimiter //
+delimiter $$
 create procedure insert_clientepj ()
 begin
 	-- Inserindo valores na tbcliente_pf
-	insert into tbcliente_pj
+	insert into tbCliente_PJ
 		values	 
         ( 6, 12345678912345, 98765432198),
         ( 7, 12345678912346, 98765432199),
         ( 8, 12345678912347, 98765432100),
         ( 9, 12345678912348, 98765432101),
         ( 10, 12345678912349, 98765432102);
-        
+	insert into tbEndereco(Logradouro, Bairro, Cidade, UF)
+		values
+        ('Av', 'Lapa', 'Campinas', 'SP'),
+        ('Av', 'Penha', 'Rio de Janeiro', 'RJ'),
+        ('Rua dos Amores', 'Sei Lá', 'Recife', 'PE'),
+        ('Rua dos Amores', 'Sei Lá', 'Recife', 'PE'),
+        ('Rua dos Amores', 'Sei Lá', 'Recife', 'PE');
 end;
-// delimiter ;
-call insert_clientepj;
+$$ delimiter ;
+call insert_clientepj();
 
 -- atividade 9
 
-delimiter //
+delimiter $$
 create procedure insert_compra()
 begin 
 	-- Inserindo valores na tabela compra
-	insert into tbcompra
+	insert into tbCompra(NotaFiscal, Fornecedor, DataCompra, CodigoBarras, ValorItem, Qtd,QtdTotal,ValorTotal)
 		values
-        (8459, STR_TO_DATE('2018/05/01', '%Y/%m/%d'), 21944.00, 700, 5),
-        (2482, STR_TO_DATE('2020/04/22', '%Y/%m/%d'), 7290.00, 180, 1),
-        (21563, STR_TO_DATE('2020/07/12', '%Y/%m/%d'), 900.00, 300, 6),
-        (156354, STR_TO_DATE('2021/11/23', '%Y/%m/%d'), 18900.00, 350, 1);
+        (8459, 'Amoroso e Doce', STR_TO_DATE('2018/05/01', '%Y/%m/%d'), 12345678910111, 22.22, 200, 700, 21944.00),
+        (2482, 'Revenda Chico Loco', STR_TO_DATE('2020/04/22', '%Y/%m/%d'), 12345678910112, 40.50, 180, 180, 7290.00),
+        (21563, 'Marcelo Dedal', STR_TO_DATE('2020/07/12', '%Y/%m/%d'), 12345678910113, 3.00, 300, 300, 900.00),
+        (8459, 'Amoroso e Doce', STR_TO_DATE('2018/05/01', '%Y/%m/%d'), 12345678910114, 35.00, 500, 700, 21944.00),
+        (156354, 'Revenda Chico Loco', STR_TO_DATE('2021/11/23', '%Y/%m/%d'), 12345678910115, 54.00, 350, 350, 18900.00);
       
 end;
-// delimiter ;
-call insert_compra;
+$$ delimiter ;
+call insert_compra();
 
 delimiter //
 create procedure insert_itemcompra()
