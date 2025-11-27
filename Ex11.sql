@@ -51,13 +51,17 @@ create table tbItem_compra(
 
 create table tbEndereco(
 	Logradouro varchar(200) not null,
+    
     BairroId int not null,
-    CidadeId int not null,
-    UFId int not null,
-	CEP decimal(8,0) primary key,
     foreign key (BairroId) references tbBairro(BairroId),
+    
+    CidadeId int not null,
+    foreign key (CidadeId) references tbCidade(CidadeId),
+    
+    UFId int not null,
     foreign key (UFId) references tbEstado(UFId),
-    foreign key (CidadeId) references tbCidade(CidadeId)
+    
+	CEP decimal(8,0) primary key
 );
 
 create table tbCliente(
@@ -67,6 +71,12 @@ create table tbCliente(
     CompEnd varchar(50),
     CepCli decimal(8,0),
     foreign key (CepCli) references tbEndereco(CEP)
+);
+
+create table tbNota_fiscal(
+	NF int primary key,
+    totalnota decimal(8,2) not null,
+    dataemissao date not null
 );
 
 create table tbVenda(
@@ -105,13 +115,7 @@ create table tbCliente_PJ(
     foreign key (Id) references tbCliente(Id)
 );
 
-create table tbNota_fiscal(
-	NF int primary key,
-    totalnota decimal(8,2) not null,
-    dataemissao date not null
-);
-
-insert into tbFornecedor(CNPJ, Nome, Telefone )
+insert into tbFornecedor(Nome, CNPJ, Telefone )
 	values
     ('Revenda Chico Loco', 1245678937123, 11934567897),
     ('José Faz Tudo S/A', 1345678937123, 11934567898),
@@ -180,7 +184,7 @@ call insert_bairro1('Liberdade');
 -- atividade 5
 
 delimiter $$
-create procedure insert_produto (in InCodigo int, in InNome varchar(200), in InValor decimal(7,2), in InQuantidade int)
+create procedure insert_produto (in InCodigo bigint, in InNome varchar(200), in InValor decimal(7,2), in InQuantidade int)
 begin
 	-- Inserindo valores na tbproduto
 	insert into tbProduto
@@ -202,16 +206,28 @@ call insert_produto (12345678910118, 'Zelador do Cemitério', 24.50, 120);
 
 
 delimiter $$
-create procedure insert_endereco (in InLogradouro varchar(200), in InBairro varchar(200), in InUf varchar(2), in InCep int)
+create procedure insert_endereco (in InLogradouro varchar(200), in InBairro varchar(200), in InCidade varchar(200), in InUf varchar(2), in InCep int)
 begin
 	-- Inserindo valores na tbendereco
 
-	insert into tbEndereco(Logradouro, Bairro, Cidade, UF, CEP)
+	insert into tbBairro(Bairro)
+		values
+        (InBairro);
+        
+	insert into tbCidade(Cidade)
+		values
+        (InCidade);
+        
+	insert into tbEstado(UF)
+		values
+        (InUF);
+        
+	insert into tbEndereco(Logradouro, CEP)
 		values 
-		(InLogradouro, inBairro, InUf, InCep);
-
+		(InLogradouro, InCep);
 end;
 $$ delimiter ;
+
 call insert_endereco('Rua da Federal','Lapa' , 'São Paulo', 'SP', 12345050);
 call insert_endereco('Av Brasil','Lapa', 'Campinas', 'SP', 12345051);
 call insert_endereco('Rua Liberdade','Consolação', 'São Paulo', 'SP', 12345052);
@@ -225,33 +241,24 @@ call insert_endereco('Rua Pão na Chapa','Barra Funda', 'Ponta Grossa', 'RS', 12
  
 
 delimiter $$
-create procedure insert_cliente (in InNomeCli varchar(200), in InNumEnd int, in InCompEnd varchar(200))
+create procedure insert_cliente (in InNomeCli varchar(200), in InNumEnd int, in InCompEnd varchar(200), in InCepCli int, in InId int, in InCPF decimal(11,0), in InRG decimal(9,0), in InRG_DIG char(1), in InNasc datetime)
 begin
 	-- Inserindo valores na tbcliente
 	insert into tbCliente (NomeCli, NumEnd, CompEnd, CepCli)
 		values 
-        ('Pimpão', 325, null, 12345051),
-        ( 'Disney Chaplin', 89, 'Ap.12', 12345053),
-        ('Marciano', 744, null, 12345054),
-        ('Lança Perfume', 128, null, 12345059),
-        ('Remédio Amargo', 2585, null, 12345058),
-        ('Paganada', 159, null, 12345051),
-        ('Caloteando', 69, null, 12345053),
-        ('SemGrana', 189, null, 12345060),
-        ('Cemreais', 5024, 'Sala 23', 12345060),
-        ('Durango', 1254, null, 12345060);
+        (InNomeCli, InNumEnd, InCompEnd, InCepCli);
 
-	insert into tbCliente_PF()
+	insert into tbCliente_PF(Id, CPF, RG, RG_DIG, Nasc)
 		values	 
-        (1, 12345678911, 12345678, 0,'2000-10-12'),
-        (2, 12345678912, 12345679, 0, '2001-11-21'),
-        (3, 12345678913, 12345680, 0, '2001-01-06'),
-        (4, 12345678914, 12345681, 'X', '2004-04-05'),
-        (5, 12345678915, 12345682, 0, '2002-07-15');
-        
+			(InId, InCPF, InRG, InRG_DIG, InNasc);
 end;
 $$ delimiter ;
-call insert_cliente();
+
+call insert_cliente('Pimpão', 325, null, 12345051, 1, 12345678911, 12345678, 0,'2000-10-12');
+call insert_cliente('Disney Chaplin', 89, 'Ap.12', 12345053, 2, 12345678912, 12345679, 0, '2001-11-21');
+call insert_cliente('Marciano', 744, null, 12345054, 3, 12345678913, 12345680, 0, '2001-01-06');
+call insert_cliente('Lança Perfume', 128, null, 12345059, 4, 12345678914, 12345681, 'X', '2004-04-05');
+call insert_cliente('Remédio Amargo', 2585, null, 12345058, 5, 12345678915, 12345682, 0, '2002-07-15');
 
 -- atividade 8
 
