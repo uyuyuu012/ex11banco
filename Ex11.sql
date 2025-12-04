@@ -403,53 +403,68 @@ call insert_produto2(12345678910132, 'Vestido Decote Redondo', 144.00, 50);
 
 -- atividade 13
 
--- deletando valores na tabela produto
-delimiter //
-create procedure delete_produto(
-	in p_codigobarras decimal(14,0)
+DELIMITER $$
+
+CREATE PROCEDURE spapagar_produtos(
+    pCodigoBarras DECIMAL(14,0)
 )
-begin
-	
-    delete from tbproduto where codigobarras = p_codigobarras;
-    
-end;
-// delimiter ;
-call delete_produto(12345678910116);
-call delete_produto(12345678910117);
+BEGIN
+    IF EXISTS (SELECT 1 FROM tbProduto WHERE CodigoBarras = pCodigoBarras) THEN
+        
+        DELETE FROM tbproduto 
+        WHERE CodigoBarras = pCodigoBarras;
 
--- atividade 14
+    END IF;
 
--- atualizando valor unitario dos produtos na tbproduto
-delimiter // 
-create procedure update_produto(
-	in p_codigobarras decimal(14,0),
-    in p_valor decimal(7,2)
+END$$
+
+DELIMITER ;
+
+-- Chamadas 
+
+call spapagar_produtos(12345678910116);
+call spapagar_produtos(12345678910117);
+
+
+-- EX14 - ATUALIZAR PRODUTOS
+
+DELIMITER $$
+
+CREATE PROCEDURE spupdate_produtos(
+    pCodigoBarras DECIMAL(14,0),
+    pNome VARCHAR(200),
+    pValorUnitario DECIMAL(8,2)
 )
-begin
+BEGIN
+    IF EXISTS (SELECT 1 FROM tbProduto WHERE CodigoBarras = pCodigoBarras) THEN
+        UPDATE tbproduto
+        SET Nome = pNome,
+            Valor = pValorUnitario
+        WHERE CodigoBarras = pCodigoBarras;
+    END IF;
+END$$
 
-	update tbproduto
-    set valorunitario = p_valor
-    where codigobarras = p_codigobarras;
-    
-end;
-// delimiter ;
-call update_produto(12345678910111, 64.50);
-call update_produto(12345678910112, 120.50);
-call update_produto(12345678910113, 64.00);
+DELIMITER ;
 
--- atividade 15
+-- Chamadas
 
--- selecionando tbproduto para amostra
-delimiter //
-create procedure select_produto()
-begin
-	
-	select * from tbproduto;
-    
-end;
-// delimiter ;
-call select_produto();
+call spupdate_produtos(12345678910111, 'Rei de Papel Mache', 64.50);
+call spupdate_produtos(12345678910112, 'Bolinha de Sabão', 120.00);
+call spupdate_produtos(12345678910113, 'Carro Bate Bate', 64.00);
 
-    
 
-    
+
+-- EX15 - MOSTRAR PRODUTOS
+
+DELIMITER $$
+
+CREATE PROCEDURE spMostrar_Produtos()
+BEGIN
+    SELECT * FROM tbproduto;
+END$$
+
+DELIMITER ;
+
+-- Chamadas 
+
+call spMostrar_Produtos();
